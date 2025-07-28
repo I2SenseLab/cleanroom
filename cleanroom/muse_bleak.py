@@ -8,12 +8,19 @@ class MuseBleak:
     """Muse 2016 headband via Bleak (CoreBluetooth on macOS)."""
 
     # UUIDs for the EEG data channels
+    #
+    # Original versions of this project expected five EEG channels, however
+    # modern Muse headsets only expose four.  The final UUID (ending in
+    # ``...7``) no longer produces notifications which meant
+    # ``_handle_eeg`` never saw the last channel and therefore never invoked
+    # the callback that feeds data to the web socket.  Removing the unused UUID
+    # ensures we receive all expected packets and can forward samples to the
+    # front-end.
     EEG_UUIDS = [
         '273e0003-4c4d-454d-96be-f03bac821358',
         '273e0004-4c4d-454d-96be-f03bac821358',
         '273e0005-4c4d-454d-96be-f03bac821358',
         '273e0006-4c4d-454d-96be-f03bac821358',
-        '273e0007-4c4d-454d-96be-f03bac821358',
     ]
     # Control characteristic UUID for start/stop commands
     CONTROL_UUID = '273e0001-4c4d-454d-96be-f03bac821358'
@@ -32,8 +39,10 @@ class MuseBleak:
         self._init_sample()
 
     def _init_sample(self):
-        self.timestamps = np.zeros(5)
-        self.data       = np.zeros((5, 12))
+        """Reset sample buffers for the number of subscribed EEG channels."""
+        n_chan = len(self.EEG_UUIDS)
+        self.timestamps = np.zeros(n_chan)
+        self.data = np.zeros((n_chan, 12))
         self.last_tm    = 0
 
     @staticmethod
