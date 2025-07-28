@@ -43,6 +43,8 @@ class MuseBleak:
         n_chan = len(self.EEG_UUIDS)
         self.timestamps = np.zeros(n_chan)
         self.data = np.zeros((n_chan, 12))
+        # Track which channels have delivered data for the current sample
+        self.received = np.zeros(n_chan, dtype=bool)
         self.last_tm    = 0
 
     @staticmethod
@@ -125,14 +127,15 @@ class MuseBleak:
 
         self.data[idx]       = samples
         self.timestamps[idx] = self.time_func()
+        self.received[idx]   = True
 
-        if idx == len(self.EEG_UUIDS) - 1:
-            if tm != self.last_tm + 1:
+        if np.all(self.received):
+            if tm != self.last_tm + 1 and self.last_tm != 0:
                 print(f"missing sample {tm} (last {self.last_tm})")
             self.last_tm = tm
 
             rel = np.arange(-12, 0) / 256.0
-            rel += np.min(self.timestamps[self.timestamps != 0])
+            rel += np.min(self.timestamps[self.received])
 
             if self.callback:
                 try:
