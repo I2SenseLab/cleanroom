@@ -102,12 +102,10 @@ class MuseBleak:
         Notification callback: sender is a BleakGATTCharacteristic.
         Use sender.uuid to identify the characteristic.
         """
-        # Debug: show raw notification
         try:
             uuid_str = sender.uuid
         except AttributeError:
             uuid_str = str(sender)
-        print(f"🔔 notification from {uuid_str}, Packet: {packet}")
 
         raw_uuid = uuid_str.lower()
         matches = [i for i, u in enumerate(self.EEG_UUIDS) if u.lower() == raw_uuid]
